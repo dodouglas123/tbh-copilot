@@ -90,13 +90,7 @@ def chat():
         with urlopen(req, timeout=REQUEST_TIMEOUT) as res:
             data = json.loads(res.read().decode("utf-8"))
     except HTTPError as e:
-        detail = ""
-        try:
-            raw = e.read().decode("utf-8", errors="ignore")
-            detail = json.loads(raw).get("error", {}).get("message") or raw[:300]
-        except Exception:
-            detail = str(e)
-        return jsonify({"ok": False, "error": f"OpenRouter error ({e.code})", "detail": detail}), 502
+        return jsonify({"ok": False, "error": f"OpenRouter error ({e.code})"}), 502
     except URLError:
         return jsonify({"ok": False, "error": "Unable to reach OpenRouter"}), 502
     except Exception:
