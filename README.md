@@ -13,7 +13,7 @@ farm, when to come back, when you'll level, which runes and gear to get, and how
 
 ### ▶ [Open the app](https://shigake.github.io/tbh-copilot/dashboard.html) — no install, runs in your browser
 
-100% local &nbsp;&middot;&nbsp; free, no ads, no tracking &nbsp;&middot;&nbsp; no server, no build step &nbsp;&middot;&nbsp; 16 languages
+Core app local-first &nbsp;&middot;&nbsp; free, no ads, no tracking &nbsp;&middot;&nbsp; optional AI chat backend &nbsp;&middot;&nbsp; 16 languages
 
 <img src="screenshots/overview.png" width="860" alt="Overview: a coach card with the single best next move, the party roster with POWER and DPS, and a what-to-do-now list">
 
@@ -58,9 +58,9 @@ nothing ever leaves your machine.
 ## Quick start
 
 **Option 1 — hosted (recommended):** open **[shigake.github.io/tbh-copilot](https://shigake.github.io/tbh-copilot/dashboard.html)**.
-Even hosted, your save is read and decrypted *in your browser* — nothing is uploaded anywhere.
+Even hosted, your save is read and decrypted *in your browser* — nothing is uploaded anywhere by default.
 
-**Option 2 — run it yourself:** clone the repo (or download it as a ZIP) and open `dashboard.html`. No build, no dependencies.
+**Option 2 — run it yourself:** clone the repo (or download it as a ZIP) and open `dashboard.html`. No build needed.
 
 Then:
 
@@ -79,9 +79,11 @@ and **History** charts.
 
 The save (encrypted ES3 / AES-CBC) is decrypted with Web Crypto, and the game data the app needs is bundled
 into `engine/gamedata.js`. On browsers with the File System Access API (Chrome/Edge) it watches the save
-live; on other browsers it falls back to a standard file picker. There is no backend and no build step;
-the only things fetched from the network are web fonts and the optional Steam Market prices — your save
-data is never part of any request.
+live; on other browsers it falls back to a standard file picker. There is no build step.
+
+By default, the optimizer is local-only; optional network calls are web fonts and Steam Market prices.
+If you enable the new AI chat, the chat text is sent to your own local Python backend (`/backend/chat_api.py`),
+which then calls OpenRouter using your server-side API key.
 
 One engine drives both surfaces: `engine/engine.js` (UMD, runs in the browser and in Node) computes
 effective DPS/EHP/POWER, leveling, the calibrated farm optimizer, idle, the rune tree and planners, and the
@@ -99,20 +101,63 @@ data/                 trimmed stage and rune tables
 
 ## Development
 
-There is deliberately no toolchain: edit a file, refresh the browser.
+There is deliberately no frontend toolchain: edit a file, refresh the browser.
 
 ```bash
 node engine/test.cjs    # run the engine test suite (83 assertions vs a real save)
+node engine/smoke.cjs   # structural dashboard smoke test
 ```
+
+### Optional AI chat (OpenRouter)
+
+Prerequisites:
+- Python 3.10+
+- OpenRouter API key
+
+1) Create env file from example:
+
+```bash
+cp .env.example .env
+```
+
+Set at least:
+- `OPENROUTER_API_KEY=...`
+
+2) Install backend dependency and run API:
+
+```bash
+python -m pip install -r backend/requirements.txt
+python backend/chat_api.py
+```
+
+3) Serve frontend locally (for CORS on localhost):
+
+```bash
+python -m http.server 8080
+```
+
+4) Open:
+- `http://127.0.0.1:8080/dashboard.html`
+- use the **IA chat** button (bottom-right)
+
+Quick integration test:
+- Ask any question in the chat.
+- If configured, you receive a model response.
+- If backend/env is missing, UI shows a friendly error.
+
+Security notes:
+- API key stays server-side (`OPENROUTER_API_KEY` env var), never exposed in frontend code.
+- `.env` is ignored by git; use `.env.example` as template.
+- Backend CORS is restricted to localhost origins for local development.
 
 CI runs the same suite on every push. Issues and PRs are welcome — and if the
 co-pilot helps your runs, a ⭐ helps other players find it.
 
 ## Privacy and ethics
 
-Your save never leaves your computer. It is read and decrypted locally, with no servers, analytics, or
-trackers. The project is free, has no ads, and there is no intention to ever make money from it. Use it,
-fork it, self-host it.
+Your save never leaves your computer; it is read/decrypted locally. Optional AI chat sends only chat prompts
+to OpenRouter through your local backend (never directly from frontend key). The project is free, has no ads,
+and there is no intention to ever make money from it. Use it, fork it, self-host it.
 
 ## License
 
