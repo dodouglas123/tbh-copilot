@@ -26,3 +26,7 @@ Thumbs.db
 .gstack/
 
 .ferod.*
+.env
+.env.local
+.env.*
+!.env.example
